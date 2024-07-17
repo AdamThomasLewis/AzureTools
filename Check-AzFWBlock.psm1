@@ -24,11 +24,12 @@ Function Check-AzFWBlock {
 $sub = "<YOUR SUBSCRIPTION ID>"
 $workspaceName = "<YOUR LOG ANAYLITCS WORKSPACE NAME>"
 $workspaceRG = "<YOUR RESOURCE GROUP NAME>"
+
+Write-Host " ****  Connecting to $WorkspaceName  *****" -ForegroundColor "Green"
+Set-AzContext -Subscription $sub |OUT-NULL
 $WorkspaceID = (Get-AzOperationalInsightsWorkspace -Name $workspaceName -ResourceGroupName $workspaceRG).CustomerID
 
-Write-Host " ****   Connecting to Subscription $sub   *****" -ForegroundGolor "Green"
 
-Set-AzContext -Subscription $sub |OUT-NULL
 
 Write-Host "`n Using defaults to the following prompts will return all blocks in the last day." -ForegroundColor "Green"
 
