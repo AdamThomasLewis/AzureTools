@@ -1,13 +1,29 @@
 <# Check-AzFWBlock.psm1 July 2024 Adam Lewis
-    Prompts user for IP address and looks for blocks in log-cts-ns-p-logs
+	
+	.SYNOPSIS
+	Prompts user for IP address and time range.
+    Returns firewall blocks in a LAW that contails Azure firewall logs.
+	
+	.DESCRIPTION
+	Prompts user for IP address and time range.
+    Returns firewall blocks in a LAW that contails Azure firewall logs.
+    Requires a firewall set up with diagnostic settings configured to write to a LAW
+  
+    Define the following variables:
+        $sub = "<YOUR SUBSCRIPTION ID>"
+        $workspaceName = "<YOUR LOG ANAYLITCS WORKSPACE NAME>"
+        $workspaceRG = "<YOUR RESOURCE GROUP NAME>"
+
+    .EXAMPLE
+      # Connect-AzAccount -Subscription "<YOUR SUBSCRIPTION ID>" -Use this if you are not already connected
+      Check-AzFWBlock
 #>
 
 Function Check-AzFWBlock {
-Write-Host " ****   Connecting to"
-# Connect-AzAccount -Subscription "2ea0fa31-57dd-464f-b2bd-9b3264fb4f8b"
-$sub = "2ea0fa31-57dd-464f-b2bd-9b3264fb4f8b"
-$workspaceName = "log-cts-ns-p-logs"
-$workspaceRG = "rg-cts-ns-p-1-firewall1"
+
+$sub = "<YOUR SUBSCRIPTION ID>"
+$workspaceName = "<YOUR LOG ANAYLITCS WORKSPACE NAME>"
+$workspaceRG = "<YOUR RESOURCE GROUP NAME>"
 $WorkspaceID = (Get-AzOperationalInsightsWorkspace -Name $workspaceName -ResourceGroupName $workspaceRG).CustomerID
 
 Write-Host " ****   Connecting to Subscription $sub   *****" -ForegroundGolor "Green"
@@ -25,13 +41,13 @@ Write-Host "`n Enter Destination IP or <ENTER> for ANY`n`t" -ForegroundColor "Ma
 $DestinationIP = Read-Host "Destination IP"
 
 # $TimeBegin
-Write-Host "`n Enter begin time in 24 hour format (7/15/2024 1:00:00)" -ForegroundColor "Cyan" 
+Write-Host "`n Enter begin time in 24 hour format (Ex. 7/15/2024 1:00:00)" -ForegroundColor "Cyan" 
 Write-Host "`t Press <ENTER> for 1 day ago`t" -ForegroundColor "Green" -NoNewLine
 [String]$TimeBegin = Read-Host "Begin Time"
 If ($TimeBegin -ne ""){[DateTime]$TimeBegin = $TimeBegin}
 
 # $TimeEnd
-Write-Host "`n Enter end time in 24 hour format (7/15/2024 1:00:00)" -ForegroundColor "Magenta" 
+Write-Host "`n Enter end time in 24 hour format (Ex. 7/15/2024 1:00:00)" -ForegroundColor "Magenta" 
 Write-Host "`t Press <ENTER> for NOW`t" -ForegroundColor "Green" -NoNewLine
 [String]$TimeEnd = Read-Host "End Time"
 If ($TimeEnd -ne ""){[DateTime]$TimeEnd = $TimeEnd}
@@ -67,7 +83,10 @@ ELSE   {$TimeString = $TimeString + 'datetime('
 
 $Query = $Query + $TimeString
 
+# Invoke Query
 $kqlQuery = Invoke-AzOperationalInsightsQuery -WorkspaceId $WorkspaceID -Query $query
+
+# Output results into an array (Converts from PsCustomObject enumerable)
 $Results = $kqlQuery.Results | Select -Property TimeGenerated,Protocol,SourceIp,SourcePort,DestinationIp,DestinationPort
 
 Return $Results
